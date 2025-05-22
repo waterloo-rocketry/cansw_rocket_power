@@ -26,6 +26,13 @@
         <itemPath>canlib/can.h</itemPath>
         <itemPath>canlib/canlib.h</itemPath>
         <itemPath>canlib/message_types.h</itemPath>
+        <itemPath>canlib/can_common.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="mcc_generated_files"
+                     displayName="mcc_generated_files"
+                     projectFiles="true">
+        <itemPath>mcc_generated_files/adcc.h</itemPath>
+        <itemPath>mcc_generated_files/fvr.h</itemPath>
       </logicalFolder>
       <logicalFolder name="rocketlib" displayName="rocketlib" projectFiles="true">
         <logicalFolder name="include" displayName="include" projectFiles="true">
@@ -37,6 +44,9 @@
           <itemPath>rocketlib/include/timer.h</itemPath>
         </logicalFolder>
       </logicalFolder>
+      <itemPath>device_config.h</itemPath>
+      <itemPath>error_checks.h</itemPath>
+      <itemPath>platform.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -65,6 +75,12 @@
           <itemPath>canlib/util/timing_util.c</itemPath>
         </logicalFolder>
       </logicalFolder>
+      <logicalFolder name="mcc_generated_files"
+                     displayName="mcc_generated_files"
+                     projectFiles="true">
+        <itemPath>mcc_generated_files/adcc.c</itemPath>
+        <itemPath>mcc_generated_files/fvr.c</itemPath>
+      </logicalFolder>
       <logicalFolder name="rocketlib" displayName="rocketlib" projectFiles="true">
         <logicalFolder name="common" displayName="common" projectFiles="true">
           <itemPath>rocketlib/common/crc8.c</itemPath>
@@ -77,6 +93,9 @@
         </logicalFolder>
       </logicalFolder>
       <itemPath>main.c</itemPath>
+      <itemPath>device_config.c</itemPath>
+      <itemPath>platform.c</itemPath>
+      <itemPath>error_checks.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -86,6 +105,7 @@
   </logicalFolder>
   <sourceRootList>
     <Elem></Elem>
+    <Elem>../cansw_charging/mcc_generated_files</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -136,9 +156,10 @@
         <property key="call-prologues" value="false"/>
         <property key="default-bitfield-type" value="true"/>
         <property key="default-char-type" value="true"/>
-        <property key="define-macros" value="BOARD_UNIQUE_ID=BOARD_ID_POWER_MAIN"/>
+        <property key="define-macros"
+                  value="BOARD_TYPE_UNIQUE_ID=BOARD_TYPE_ID_POWER;BOARD_INST_UNIQUE_ID=BOARD_INST_ID_POWER_ROCKET"/>
         <property key="disable-optimizations" value="true"/>
-        <property key="extra-include-directories" value=""/>
+        <property key="extra-include-directories" value="canlib;rocketlib/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>
@@ -232,6 +253,14 @@
         <property key="user-pack-device-support" value=""/>
         <property key="wpo-lto" value="false"/>
       </XC8-config-global>
+      <item path="rocketlib/common/crc8.c" ex="true" overriding="false">
+      </item>
+      <item path="rocketlib/common/low_pass_filter.c" ex="true" overriding="false">
+      </item>
+      <item path="rocketlib/pic18f26k83/i2c.c" ex="true" overriding="false">
+      </item>
+      <item path="rocketlib/pic18f26k83/pwm.c" ex="true" overriding="false">
+      </item>
     </conf>
   </confs>
 </configurationDescriptor>

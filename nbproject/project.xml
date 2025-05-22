@@ -10,6 +10,7 @@
             <make-dep-projects/>
             <sourceRootList>
                 <sourceRootElem/>
+                <sourceRootElem>../cansw_charging/mcc_generated_files</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>
