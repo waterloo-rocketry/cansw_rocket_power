@@ -3,47 +3,56 @@
 #include "mcc_generated_files/adcc.h"
 #include "platform.h"
 
-void pin_init(void) {
-    // LEDS
-    TRISA2 = 0; // set red LED pin as output
-    ANSELA2 = 0; // enable digital input buffer (Useful for reading the LED state)
-    LATA2 = LED_ON; // start with 5V power enabled
-
-    TRISA1 = 0; // set blue LED pin as output
-    ANSELA1 = 0; // enable digital input buffer (Useful for reading the LED state)
-    LATA1 = !LED_ON; // start with charging disabled
-
-    TRISA0 = 0; // set white LED pin as output
-    ANSELA0 = 0; // enable digital input buffer (Useful for reading the LED state)
-    LATA0 = !LED_ON;
-
-    // Rocket power lines
-    LATA3 = CAN_5V_ON;
-    TRISA3 = 0; // allow 5V current line to be toggle-able
+void pin_init(void) { 
+    // LEDS 
+    TRISA4 = 0; // set red LED pin as output 
+    ANSELA4 = 0; // enable digital input buffer (Useful for reading the LED state) 
+    LATA4 = LED_ON; // start with 5V power enabled 
+  
+    TRISC3 = 0; // set blue LED pin as output 
+    ANSELC3 = 0; // enable digital input buffer (Useful for reading the LED state) 
+    LATC3 = !LED_ON; // start with charging disabled 
+  
+    TRISA5 = 0; // set white LED pin as output 
+    ANSELA5 = 0; // enable digital input buffer (Useful for reading the LED state) 
+    LATA5 = !LED_ON; // start with disabled
+ 
+    // 5V fuse fault LED 
+    TRISC4 = 0; // set 5V FLT the LED pin as output
+    ANSELC4 = 0; // enable digital input buffer (Useful for reading the LED state)
+    LATC4 = 0; 
     
-    TRISB1 = 1; // set 13V current draw (battery) to be input
-    ANSELB1 = 1; // enable analog reading
+    // 12V fuse fault LED 
+    TRISC5 = 0; // set 12V FLT the LED pin as output
+    ANSELC5 = 0; // enable digital input buffer (Useful for reading the LED state)
+    LATC5 = 0; 
+ 
+    // Rocket power lines 
+    LATC7 = CAN_5V_ON; 
+    TRISC7 = 0; // allow 5V current line to be toggle-able (5V_Fuse_RST/EN?) 
+    ANSELC7 = 1; // analog 
+    LATB0 = CAN_12V_ON; 
+    TRISB0 = 0; // allow 12V current line to be toggle-able (12V_RST/EN?) 
+    ANSELB0 = 1; 
+ 
+    // Current sensing 
+    TRISB4 = 1; // set 12V current draw (battery) to be input 
+    ANSELB4 = 1; // enable analog reading 
+  
+    TRISB3 = 1; // set 5V current draw (payload logic + motor) to be input 
+    ANSELB3 = 1; // enable analog reading 
+  
+    TRISC6 = 1; // set +BATT current draw (battery) to be input 
+    ANSELC6 = 1; // enable analog reading 
+ 
+    // Voltage sensing 
+    TRISB1 = 1; // set +BATT voltage to be input 
+    ANSELB1 = 1; // enable analog reading 
+  
+    TRISA0 = 1; // set +5V voltage to be input 
+    ANSELA0 = 1; // enable analog reading 
+} 
 
-    TRISB0 = 1; // set 5V current draw (payload logic + motor) to be input
-    ANSELB0 = 1; // enable analog reading
-
-    TRISC7 = 1; // set +BATT current draw (battery) to be input
-    ANSELC7 = 1; // enable analog reading
-
-    // Battery charger
-    LATA5 = !CHG_BATT_ON; // start with charging disabled
-    TRISA5 = 0; // allow battery charging to be toggle-able
-
-    TRISA4 = 1; // set battery charging current to be input
-    ANSELA4 = 1; // enable analog reading
-
-    // Voltage health
-    TRISC2 = 1; // set +BATT voltage to be input
-    ANSELC2 = 1; // enable analog reading
-
-    TRISC3 = 1; // set +13V voltage to be input
-    ANSELC3 = 1; // enable analog reading
-}
 void RED_LED_SET(bool value) {
     LATA2 = !value ^ LED_ON;
 }
