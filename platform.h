@@ -6,6 +6,7 @@
 
 #define LED_ON 0
 #define CAN_5V_ON 1
+#define CAN_12V_ON 1
 #define CHG_BATT_ON 0
 #define MOTOR_ON 1
 #define SAMPLE_FREQ (1000.0 / MAX_SENSOR_LOOP_TIME_DIFF_ms)
@@ -25,8 +26,12 @@
 #define BATT_RESISTANCE_DIVIDER 5.6
 #define GROUND_RESISTANCE_DIVIDER 5.6
 // Current monitoring in units of 10 milliohms
-#define CURR_5V_RESISTOR 2.0
-#define CURR_13V_RESISTOR 1.0   
+//#define CURR_5V_RESISTOR 2.0
+//#define CURR_13V_RESISTOR 1.0
+#define CURR_5V_RESISTOR 1.67 // in kiloohms
+#define CURR_12V_RESISTOR 1.67 // in kiloohms
+#define OPAMP_CURR_GAIN 8.15
+#define CURR_GAIN 0.000182 // A/A
 #define CHG_CURR_RESISTOR 2.0
 #define CURR_BATT_RESISTOR 1.0
 #define CURR_MOTOR_RESISTOR 1.0
@@ -47,8 +52,8 @@ void update_batt_curr_low_pass(void);
 // returns the value from the lower cut off frequency filter
 uint16_t get_batt_curr_low_pass(void);
 
-void update_13v_curr_low_pass(void);
-uint16_t get_13v_curr_low_pass(void);
+void update_12v_curr_low_pass(void);
+uint16_t get_12v_curr_low_pass(void);
 void update_5v_curr_low_pass(void);
 uint16_t get_5v_curr_low_pass(void);
 

@@ -66,12 +66,13 @@ void WHITE_LED_SET(bool value) {
 }
 
 void CAN_5V_SET(bool value) {
-    LATA3 = !value ^ CAN_5V_ON;
+    LATC7 = !value ^ CAN_5V_ON;
 }
 
-void BATTERY_CHARGER_EN(bool value) {
-    LATA5 = !value ^ CHG_BATT_ON;
-}
+// I don't think we need this anymore
+//void BATTERY_CHARGER_EN(bool value) {
+//    LATA5 = !value ^ CHG_BATT_ON;
+//}
 
 
 
@@ -84,7 +85,7 @@ void BATTERY_CHARGER_EN(bool value) {
 double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
 double low_pass_curr_batt = 0;
 double low_pass_curr_motor = 0;
-double low_pass_curr_13v = 0;
+double low_pass_curr_12v = 0;
 double low_pass_curr_5v = 0;
 //i think this is needed for 13V BATT Motor and 5V current readings? not sure tho
 void update_batt_curr_low_pass(void) {
@@ -96,17 +97,19 @@ uint16_t get_batt_curr_low_pass(void) {
     return (uint16_t)low_pass_curr_batt;
 }
 
-void update_13v_curr_low_pass(void) {
-    double new_curr_reading = ADCC_GetSingleConversion(channel_POWER_V13) * CONVERSION_ADC_TO_V / CURR_13V_RESISTOR;
-    low_pass_curr_13v = alpha_low * low_pass_curr_13v + (1.0 - alpha_low) * new_curr_reading;
+void update_12v_curr_low_pass(void) {
+    double new_curr_reading = (ADCC_GetSingleConversion(channel_POWER_V12) * CONVERSION_ADC_TO_V / OPAMP_CURR_GAIN) 
+        / (CURR_12V_RESISTOR * CURR_GAIN);
+    low_pass_curr_12v = alpha_low * low_pass_curr_12v + (1.0 - alpha_low) * new_curr_reading;
 }
 
-uint16_t get_13v_curr_low_pass(void) {
-    return (uint16_t)low_pass_curr_13v;
+uint16_t get_12v_curr_low_pass(void) {
+    return (uint16_t)low_pass_curr_12v;
 }
 
 void update_5v_curr_low_pass(void) {
-    double new_curr_reading = ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V / CURR_5V_RESISTOR;
+    double new_curr_reading = (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V / OPAMP_CURR_GAIN) 
+        / (CURR_5V_RESISTOR * CURR_GAIN);
     low_pass_curr_5v = alpha_low * low_pass_curr_5v + (1.0 - alpha_low) * new_curr_reading;
 }
 

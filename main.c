@@ -127,7 +127,7 @@ int main(void) {
 
             can_msg_t curr_msg_13v; // measures 13V current
             build_analog_data_msg(
-                PRIO_LOW, millis(), SENSOR_MOTOR_CURR, get_13v_curr_low_pass(), &curr_msg_13v);
+                PRIO_LOW, millis(), SENSOR_MOTOR_CURR, get_12v_curr_low_pass(), &curr_msg_13v);
             txb_enqueue(&curr_msg_13v);
 
             bool result;
@@ -165,7 +165,7 @@ int main(void) {
             sensor_last_millis = millis();
             update_batt_curr_low_pass();
             update_5v_curr_low_pass();
-            update_13v_curr_low_pass();
+            update_12v_curr_low_pass();
         }
     }
 }

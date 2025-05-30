@@ -90,8 +90,8 @@ bool check_5v_current_error(void) {
     return true;
 }
 
-bool check_13v_current_error(void) {
-    uint16_t curr_draw_mA = get_13v_curr_low_pass();
+bool check_12v_current_error(void) {
+    uint16_t curr_draw_mA = get_12v_curr_low_pass();
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_13V_mA) {
         uint32_t timestamp = millis();
@@ -100,7 +100,7 @@ bool check_13v_current_error(void) {
         curr_data[1] = (curr_draw_mA >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_general_board_status_msg(PRIO_MEDIUM, timestamp, 0, 1, &error_msg);
+        build_general_board_status_msg(PRIO_MEDIUM, timestamp, (1 << E_12V_OVsER_CURRENT_OFFSET), 0, &error_msg);
         txb_enqueue(&error_msg);
         return false;
     }
