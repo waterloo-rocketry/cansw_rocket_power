@@ -78,7 +78,7 @@ int main(void) {
     uint32_t last_millis = 0;
     uint32_t sensor_last_millis = millis();
     uint32_t last_message_millis = millis();
-    BATTERY_CHARGER_EN(false);
+    // BATTERY_CHARGER_EN(false);
 
     bool heartbeat = false;
     while (1) {
@@ -114,7 +114,7 @@ int main(void) {
             status_ok &= check_battery_current_error();
 
             status_ok &= check_5v_current_error();
-            status_ok &= check_13v_current_error();
+            status_ok &= check_12v_current_error();
 
             // if there was an issue, a message would already have been sent out
             if (status_ok) {
@@ -125,10 +125,10 @@ int main(void) {
             build_analog_data_msg(PRIO_LOW, millis(), SENSOR_5V_CURR, get_5v_curr_low_pass(), &curr_msg_5v);
             txb_enqueue(&curr_msg_5v);
 
-            can_msg_t curr_msg_13v; // measures 13V current
+            can_msg_t curr_msg_12v; // measures 12V current
             build_analog_data_msg(
-                PRIO_LOW, millis(), SENSOR_MOTOR_CURR, get_12v_curr_low_pass(), &curr_msg_13v);
-            txb_enqueue(&curr_msg_13v);
+                PRIO_LOW, millis(), SENSOR_MOTOR_CURR, get_12v_curr_low_pass(), &curr_msg_12v);
+            txb_enqueue(&curr_msg_12v);
 
             bool result;
             // Battery charging current
@@ -183,19 +183,20 @@ static void can_msg_handler(const can_msg_t *msg) {
             act_id = get_actuator_id(msg);
             act_state = get_cmd_actuator_state(msg);
 
-            // Battery Charger On/Off
-            if (act_id == ACTUATOR_CHARGE_ENABLE) {
-                if (act_state == ACT_STATE_ON) {
-                    BATTERY_CHARGER_EN(true);
-                    RED_LED_SET(true); // temporarily commented out
-                } else if (act_state == ACT_STATE_OFF) {
-                    BATTERY_CHARGER_EN(false);
-                    RED_LED_SET(false); // temporarily bye
-                }
-            }
+              // no more battery charger
+//            // Battery Charger On/Off
+//            if (act_id == ACTUATOR_CHARGE_ENABLE) {
+//                if (act_state == ACT_STATE_ON) {
+//                    BATTERY_CHARGER_EN(true);
+//                    RED_LED_SET(true); // temporarily commented out
+//                } else if (act_state == ACT_STATE_OFF) {
+//                    BATTERY_CHARGER_EN(false);
+//                    RED_LED_SET(false); // temporarily bye
+//                }
+//            }
 
             // RocketCAN 5V Line On/Off
-            else if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
+            if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
                 if (act_state == ACT_STATE_ON) {
                     CAN_5V_SET(true);
                     BLUE_LED_SET(true);

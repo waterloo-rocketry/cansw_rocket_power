@@ -21,6 +21,6 @@
 bool check_battery_voltage_error(void);
 bool check_battery_current_error(void);
 bool check_5v_current_error(void);
-bool check_13v_current_error(void);
+bool check_12v_current_error(void);
 
 #endif /* ERROR_CHECKS_H */

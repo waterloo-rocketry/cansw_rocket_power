@@ -118,10 +118,10 @@
         <platformTool>noID</platformTool>
         <languageToolchain>XC8</languageToolchain>
         <languageToolchainVersion>3.00</languageToolchainVersion>
-        <platform>3</platform>
+        <platform>4</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC18F-K_DFP" vendor="Microchip" version="1.13.292"/>
+        <pack name="PIC18F-K_DFP" vendor="Microchip" version="1.14.301"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>
@@ -157,7 +157,7 @@
         <property key="default-bitfield-type" value="true"/>
         <property key="default-char-type" value="true"/>
         <property key="define-macros"
-                  value="BOARD_TYPE_UNIQUE_ID=BOARD_TYPE_ID_POWER;BOARD_INST_UNIQUE_ID=BOARD_INST_ID_POWER_ROCKET"/>
+                  value="BOARD_TYPE_UNIQUE_ID=BOARD_TYPE_ID_POWER;BOARD_INST_UNIQUE_ID=BOARD_INST_ID_ROCKET"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories" value="canlib;rocketlib/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
@@ -187,15 +187,25 @@
       </HI-TECH-COMP>
       <HI-TECH-LINK>
         <property key="additional-options-checksum" value=""/>
+        <property key="additional-options-checksumAVR" value=""/>
+        <property key="additional-options-checksumAVR2" value="0"/>
         <property key="additional-options-code-offset" value=""/>
         <property key="additional-options-command-line" value=""/>
         <property key="additional-options-errata" value=""/>
         <property key="additional-options-extend-address" value="false"/>
+        <property key="additional-options-fillAVR2" value="0"/>
         <property key="additional-options-trace-type" value=""/>
         <property key="additional-options-use-response-files" value="false"/>
         <property key="backup-reset-condition-flags" value="false"/>
         <property key="calibrate-oscillator" value="false"/>
         <property key="calibrate-oscillator-value" value="0x3400"/>
+        <property key="checksum-flash-options-addressce" value=""/>
+        <property key="checksum-flash-options-addresscs" value=""/>
+        <property key="checksum-flash-options-algorithmc"
+                  value="Select checksum algorithm"/>
+        <property key="checksum-flash-options-destc" value=""/>
+        <property key="checksum-flash-options-offsetc" value="0xFFFF"/>
+        <property key="checksum-flash-options-widthc" value="2"/>
         <property key="clear-bss" value="true"/>
         <property key="code-model-external" value="wordwrite"/>
         <property key="code-model-rom" value=""/>
@@ -211,12 +221,16 @@
         <property key="display-psect-usage" value="false"/>
         <property key="extra-lib-directories" value=""/>
         <property key="fill-flash-options-addr" value=""/>
+        <property key="fill-flash-options-addrfe" value=""/>
+        <property key="fill-flash-options-addrfs" value=""/>
         <property key="fill-flash-options-const" value=""/>
+        <property key="fill-flash-options-constf" value=""/>
         <property key="fill-flash-options-how" value="0"/>
         <property key="fill-flash-options-inc-const" value="1"/>
         <property key="fill-flash-options-increment" value=""/>
         <property key="fill-flash-options-seq" value=""/>
         <property key="fill-flash-options-what" value="0"/>
+        <property key="fill-flash-options-wwidthf" value="2"/>
         <property key="format-hex-file-for-download" value="false"/>
         <property key="initialize-data" value="true"/>
         <property key="input-libraries" value="libm"/>
