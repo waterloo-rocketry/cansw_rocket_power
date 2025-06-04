@@ -13,7 +13,7 @@
 #define LOW_PASS_ALPHA(TR) ((SAMPLE_FREQ * TR / 5.0) / (1 + SAMPLE_FREQ * TR / 5.0))
 #define LOW_PASS_RESPONSE_TIME 10 // seconds
 #define MOTOR_POWER LATB3
-#define MOTOR_PWM LATB5 
+#define MOTOR_PWM LATB5
 
 // Time between main loop code execution
 #define MAX_LOOP_TIME_DIFF_ms 500
@@ -26,8 +26,8 @@
 #define BATT_RESISTANCE_DIVIDER 5.6
 #define GROUND_RESISTANCE_DIVIDER 5.6
 // Current monitoring in units of 10 milliohms
-//#define CURR_5V_RESISTOR 2.0
-//#define CURR_13V_RESISTOR 1.0
+// #define CURR_5V_RESISTOR 2.0
+// #define CURR_13V_RESISTOR 1.0
 #define CURR_5V_RESISTOR 1.67 // in kiloohms
 #define CURR_12V_RESISTOR 1.67 // in kiloohms
 #define OPAMP_CURR_GAIN 8.15

@@ -104,8 +104,8 @@ int main(void) {
             // update our loop counter
             last_millis = millis();
 
-            // visual heartbeat indicator
-            WHITE_LED_SET(heartbeat);
+            // visual heartbeat indicator, changed from white to blue
+            BLUE_LED_SET(heartbeat);
             heartbeat = !heartbeat;
 
             // check for general board status
@@ -122,38 +122,61 @@ int main(void) {
             }
 
             can_msg_t curr_msg_5v; // measures current going into CAN 5V
-            build_analog_data_msg(PRIO_LOW, millis(), SENSOR_5V_CURR, get_5v_curr_low_pass(), &curr_msg_5v);
+            build_analog_data_msg(
+                PRIO_LOW, millis(), SENSOR_5V_CURR, get_5v_curr_low_pass(), &curr_msg_5v
+            );
             txb_enqueue(&curr_msg_5v);
-
+            
+            can_msg_t volt_msg_5v; // measures current going into CAN 5V
+            build_analog_data_msg(
+                PRIO_LOW, millis(), SENSOR_5V_VOLT, get_5v_volt_low_pass(), &volt_msg_5v
+            );
+            txb_enqueue(&curr_msg_5v);
+            
             can_msg_t curr_msg_12v; // measures 12V current
             build_analog_data_msg(
-                PRIO_LOW, millis(), SENSOR_MOTOR_CURR, get_12v_curr_low_pass(), &curr_msg_12v);
+                PRIO_LOW, millis(), SENSOR_MOTOR_CURR, get_12v_curr_low_pass(), &curr_msg_12v
+            );
             txb_enqueue(&curr_msg_12v);
 
             bool result;
-            // Battery charging current
-            can_msg_t curr_msg_chg; // charging current going into lipo
+//            // Battery charging current
+//            can_msg_t curr_msg_chg; // charging current going into lipo
+//            build_analog_data_msg(
+//                PRIO_LOW,
+//                millis(),
+//                SENSOR_CHARGE_CURR,
+//                (uint16_t)(ADCC_GetSingleConversion(channel_CHARGE_CURR) / CHG_CURR_RESISTOR),
+//                &curr_msg_chg
+//            );
+//            result = txb_enqueue(&curr_msg_chg);
+//
+            // LiPo voltage
+            can_msg_t volt_msg_batt; // current draw from lipo
             build_analog_data_msg(
-                PRIO_LOW, millis(),
-                SENSOR_CHARGE_CURR,
-                (uint16_t)(ADCC_GetSingleConversion(channel_CHARGE_CURR) / CHG_CURR_RESISTOR),
-                &curr_msg_chg);
-            result = txb_enqueue(&curr_msg_chg);
-
+                PRIO_LOW, millis(), SENSOR_BATT_VOLT, get_batt_volt_low_pass(), &volt_msg_batt
+            );
+            result = txb_enqueue(&volt_msg_batt); 
+            
+            // LiPo current
             can_msg_t curr_msg_batt; // current draw from lipo
             build_analog_data_msg(
-                PRIO_LOW, millis(), SENSOR_BATT_CURR, get_batt_curr_low_pass(), &curr_msg_batt);
-            result = txb_enqueue(&curr_msg_batt);
+                PRIO_LOW, millis(), SENSOR_BATT_CURR, get_batt_curr_low_pass(), &curr_msg_batt
+            );
+            result = txb_enqueue(&curr_msg_batt); 
 
             // Voltage health
 
             // battery voltage msg is constructed in check_battery_voltage_error if no error
             can_msg_t ground_volt_msg; // groundside battery voltage
-            build_analog_data_msg(PRIO_LOW, millis(),
-                                  SENSOR_CHARGE_VOLT,
-                                  (uint16_t)(ADCC_GetSingleConversion(channel_GROUND_VOLT) *
-                                             GROUND_RESISTANCE_DIVIDER),
-                                  &ground_volt_msg);
+            build_analog_data_msg(
+                PRIO_LOW,
+                millis(),
+                SENSOR_CHARGE_VOLT,
+                (uint16_t)(ADCC_GetSingleConversion(channel_GROUND_VOLT) * GROUND_RESISTANCE_DIVIDER
+                ),
+                &ground_volt_msg
+            );
             result = txb_enqueue(&ground_volt_msg);
         } // ended here
 
@@ -183,17 +206,17 @@ static void can_msg_handler(const can_msg_t *msg) {
             act_id = get_actuator_id(msg);
             act_state = get_cmd_actuator_state(msg);
 
-              // no more battery charger
-//            // Battery Charger On/Off
-//            if (act_id == ACTUATOR_CHARGE_ENABLE) {
-//                if (act_state == ACT_STATE_ON) {
-//                    BATTERY_CHARGER_EN(true);
-//                    RED_LED_SET(true); // temporarily commented out
-//                } else if (act_state == ACT_STATE_OFF) {
-//                    BATTERY_CHARGER_EN(false);
-//                    RED_LED_SET(false); // temporarily bye
-//                }
-//            }
+            // no more battery charger
+            //            // Battery Charger On/Off
+            //            if (act_id == ACTUATOR_CHARGE_ENABLE) {
+            //                if (act_state == ACT_STATE_ON) {
+            //                    BATTERY_CHARGER_EN(true);
+            //                    RED_LED_SET(true); // temporarily commented out
+            //                } else if (act_state == ACT_STATE_OFF) {
+            //                    BATTERY_CHARGER_EN(false);
+            //                    RED_LED_SET(false); // temporarily bye
+            //                }
+            //            }
 
             // RocketCAN 5V Line On/Off
             if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
@@ -232,7 +255,7 @@ static void can_msg_handler(const can_msg_t *msg) {
 // Send a CAN message with nominal status
 static void send_status_ok(void) {
     can_msg_t board_stat_msg;
-    build_general_board_status_msg(PRIO_MEDIUM, millis(), 0, 0 , &board_stat_msg);
+    build_general_board_status_msg(PRIO_MEDIUM, millis(), 0, 0, &board_stat_msg);
     txb_enqueue(&board_stat_msg);
 }
 

@@ -14,23 +14,21 @@
 
 bool check_battery_voltage_error(void) {
     uint16_t adc_result = ADCC_GetSingleConversion(channel_BATT_VOLT);
-    uint16_t batt_voltage_mV =
-        (uint16_t)(adc_result * BATT_RESISTANCE_DIVIDER);
+    uint16_t batt_voltage_mV = (uint16_t)(adc_result * BATT_RESISTANCE_DIVIDER);
 
     if (batt_voltage_mV < UNDERVOLTAGE_THRESHOLD_BATT_mV ||
         batt_voltage_mV > OVERVOLTAGE_THRESHOLD_BATT_mV) {
-
         uint32_t timestamp = millis();
         uint8_t batt_data[2] = {0};
         batt_data[0] = (batt_voltage_mV >> 8) & 0xff;
         batt_data[1] = (batt_voltage_mV >> 0) & 0xff;
 
-		uint32_t gen_err_bitfield = 0;
-		if(batt_voltage_mV < UNDERVOLTAGE_THRESHOLD_BATT_mV){
-		    gen_err_bitfield |= (1 << E_12V_UNDER_VOLTAGE_OFFSET);
-		}else{
-		    gen_err_bitfield |= (1 << E_12V_OVER_VOLTAGE_OFFSET);
-		}
+        uint32_t gen_err_bitfield = 0;
+        if (batt_voltage_mV < UNDERVOLTAGE_THRESHOLD_BATT_mV) {
+            gen_err_bitfield |= (1 << E_12V_UNDER_VOLTAGE_OFFSET);
+        } else {
+            gen_err_bitfield |= (1 << E_12V_OVER_VOLTAGE_OFFSET);
+        }
         can_msg_t error_msg;
         build_general_board_status_msg(PRIO_MEDIUM, timestamp, gen_err_bitfield, 0, &error_msg);
         txb_enqueue(&error_msg);
@@ -39,14 +37,15 @@ bool check_battery_voltage_error(void) {
         return false;
     }
 
-        can_msg_t batt_volt_msg; // lipo battery voltage
-        build_analog_data_msg(
-			PRIO_LOW, millis(),
-            SENSOR_BATT_VOLT,
-            (uint16_t)(ADCC_GetSingleConversion(channel_BATT_VOLT) * BATT_RESISTANCE_DIVIDER),
-            &batt_volt_msg
-            );
-        txb_enqueue(&batt_volt_msg);
+    can_msg_t batt_volt_msg; // lipo battery voltage
+    build_analog_data_msg(
+        PRIO_LOW,
+        millis(),
+        SENSOR_BATT_VOLT,
+        (uint16_t)(ADCC_GetSingleConversion(channel_BATT_VOLT) * BATT_RESISTANCE_DIVIDER),
+        &batt_volt_msg
+    );
+    txb_enqueue(&batt_volt_msg);
 
     // things look ok
     return true;
@@ -62,7 +61,9 @@ bool check_battery_current_error(void) {
         curr_data[1] = (curr_draw_mA >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_general_board_status_msg(PRIO_MEDIUM, timestamp, (1 << E_12V_OVER_CURRENT_OFFSET), 0, &error_msg);
+        build_general_board_status_msg(
+            PRIO_MEDIUM, timestamp, (1 << E_12V_OVER_CURRENT_OFFSET), 0, &error_msg
+        );
         txb_enqueue(&error_msg);
         return false;
     }
@@ -81,7 +82,9 @@ bool check_5v_current_error(void) {
         curr_data[1] = (curr_draw_mA >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_general_board_status_msg(PRIO_MEDIUM, timestamp, (1 << E_5V_OVER_CURRENT_OFFSET), 0, &error_msg);
+        build_general_board_status_msg(
+            PRIO_MEDIUM, timestamp, (1 << E_5V_OVER_CURRENT_OFFSET), 0, &error_msg
+        );
         txb_enqueue(&error_msg);
         return false;
     }
@@ -93,14 +96,53 @@ bool check_5v_current_error(void) {
 bool check_12v_current_error(void) {
     uint16_t curr_draw_mA = get_12v_curr_low_pass();
 
-    if (curr_draw_mA > OVERCURRENT_THRESHOLD_13V_mA) {
+    if (curr_draw_mA > OVERCURRENT_THRESHOLD_12V_mA) {
         uint32_t timestamp = millis();
         uint8_t curr_data[2] = {0};
         curr_data[0] = (curr_draw_mA >> 8) & 0xff;
         curr_data[1] = (curr_draw_mA >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_general_board_status_msg(PRIO_MEDIUM, timestamp, (1 << E_12V_OVER_CURRENT_OFFSET), 0, &error_msg);
+        build_general_board_status_msg(
+            PRIO_MEDIUM, timestamp, (1 << E_12V_OVER_CURRENT_OFFSET), 0, &error_msg
+        );
+        txb_enqueue(&error_msg);
+        return false;
+    }
+
+    // things look ok
+    return true;
+}
+
+// new health check
+bool check_5v_voltage_error(void) {
+    uint16_t volt_draw_mV = get_5v_volt_low_pass();
+
+    // overvoltage
+    if (volt_draw_mV > OVERVOLTAGE_THRESHOLD_5V_mV) {
+        uint32_t timestamp = millis();
+        uint8_t volt_data[2] = {0};
+        volt_data[0] = (volt_draw_mV >> 8) & 0xff;
+        volt_data[1] = (volt_draw_mV >> 0) & 0xff;
+
+        can_msg_t error_msg;
+        build_general_board_status_msg(
+            PRIO_MEDIUM, timestamp, (1 << E_5V_OVER_VOLTAGE_OFFSET), 0, &error_msg
+        );
+        txb_enqueue(&error_msg);
+        return false;
+    } 
+    // undervoltage
+    else if (volt_draw_mV < UNDERVOLTAGE_THRESHOLD_5V_mV) {
+        uint32_t timestamp = millis();
+        uint8_t volt_data[2] = {0};
+        volt_data[0] = (volt_draw_mV >> 8) & 0xff;
+        volt_data[1] = (volt_draw_mV >> 0) & 0xff;
+
+        can_msg_t error_msg;
+        build_general_board_status_msg(
+            PRIO_MEDIUM, timestamp, (1 << E_5V_OVER_VOLTAGE_OFFSET), 0, &error_msg
+        );
         txb_enqueue(&error_msg);
         return false;
     }
