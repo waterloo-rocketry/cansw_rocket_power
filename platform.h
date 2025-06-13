@@ -35,6 +35,8 @@
 #define CHG_CURR_RESISTOR 2.0
 #define CURR_BATT_RESISTOR 1.0
 #define CURR_MOTOR_RESISTOR 1.0
+#define CONVERSION_RATIO_BATT_VOLT 3.2 // (220 + 100)/100
+#define CONVERSION_RATIO_5V_VOLT 2.5 // (15 + 10)/10
 
 #define VREF 4.096
 #define MAX_COUNTS 4096
@@ -46,6 +48,7 @@ void RED_LED_SET(bool value);
 void BLUE_LED_SET(bool value);
 void WHITE_LED_SET(bool value);
 void CAN_5V_SET(bool value);
+void CAN_12V_SET(bool value);
 void BATTERY_CHARGER_EN(bool value);
 
 void update_batt_curr_low_pass(void);

@@ -152,7 +152,7 @@ int main(void) {
 //            result = txb_enqueue(&curr_msg_chg);
 //
             // LiPo voltage
-            can_msg_t volt_msg_batt; // current draw from lipo
+            can_msg_t volt_msg_batt; // voltage draw from lipo
             build_analog_data_msg(
                 PRIO_LOW, millis(), SENSOR_BATT_VOLT, get_batt_volt_low_pass(), &volt_msg_batt
             );
@@ -218,14 +218,50 @@ static void can_msg_handler(const can_msg_t *msg) {
             //                }
             //            }
 
-            // RocketCAN 5V Line On/Off
-            if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
-                if (act_state == ACT_STATE_ON) {
-                    CAN_5V_SET(true);
-                    BLUE_LED_SET(true);
-                } else if (act_state == ACT_STATE_OFF) {
-                    CAN_5V_SET(false);
-                    BLUE_LED_SET(false);
+            if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_ROCKET) {
+                // RocketCAN 5V Line On/Off
+                if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
+                    if (act_state == ACT_STATE_ON) {
+                        CAN_5V_SET(true);
+                        BLUE_LED_SET(true);
+                        // send error message or change 5V_EFUSE_FAULT = 0?
+                    } else if (act_state == ACT_STATE_OFF) {
+                        CAN_5V_SET(false);
+                        BLUE_LED_SET(false);
+                    }
+                }
+                // RocketCan 12V Line On/Off
+                if (act_id == ACTUATOR_12V_RAIL_ROCKET) {
+                    if (act_state == ACT_STATE_ON) {
+                        CAN_12V_SET(true);
+                        BLUE_LED_SET(true);
+                    } else if (act_state == ACT_STATE_OFF) {
+                        CAN_12V_SET(false);
+                        BLUE_LED_SET(false);
+                    }
+                }
+            }
+            
+            if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_PAYLOAD) {
+                // Payload 5V Line On/Off
+                if (act_id == ACTUATOR_5V_RAIL_PAYLOAD) {
+                    if (act_state == ACT_STATE_ON) {
+                        CAN_5V_SET(true);
+                        BLUE_LED_SET(true);
+                    } else if (act_state == ACT_STATE_OFF) {
+                        CAN_5V_SET(false);
+                        BLUE_LED_SET(false);
+                    }
+                }
+                // Payload 12V Line On/Off
+                if (act_id == ACTUATOR_12V_RAIL_PAYLOAD) {
+                    if (act_state == ACT_STATE_ON) {
+                        CAN_5V_SET(true);
+                        BLUE_LED_SET(true);
+                    } else if (act_state == ACT_STATE_OFF) {
+                        CAN_5V_SET(false);
+                        BLUE_LED_SET(false);
+                    }
                 }
             }
             break;

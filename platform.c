@@ -65,8 +65,13 @@ void WHITE_LED_SET(bool value) {
     LATA0 = !value ^ LED_ON;
 }
 
+// Rocket actuators ---- confirm pin 
 void CAN_5V_SET(bool value) {
     LATC7 = !value ^ CAN_5V_ON;
+}
+
+void CAN_12V_SET(bool value) {
+    LATC5 = !value ^ CAN_12V_ON;
 }
 
 // I don't think we need this anymore
@@ -99,7 +104,8 @@ uint16_t get_batt_curr_low_pass(void) {
 }
 
 void update_batt_volt_low_pass(void) {
-    
+    double new_curr_reading = ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_RATIO_BATT_VOLT;
+    low_pass_curr_batt = alpha_low * low_pass_curr_batt + (1.0 - alpha_low) * new_curr_reading;
 }
 
 uint16_t get_batt_volt_low_pass(void) {
@@ -130,7 +136,7 @@ uint16_t get_5v_curr_low_pass(void) {
 
 void update_5v_volt_low_pass(void) {
     double new_volt_reading =
-        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V);
+        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V) * CONVERSION_RATIO_5V_VOLT;
     low_pass_volt_5v = alpha_low * low_pass_volt_5v + (1.0 - alpha_low) * new_volt_reading;
 }
 

@@ -24,8 +24,8 @@
 #define OVERVOLTAGE_THRESHOLD_5V_mV 5200
 
 // Fault signals are active low
-#define 12V_Fuse_FLT 0
-#define 5V_Fuse_FLT 0
+#define EFUSE_12V_FLT 0
+#define EFUSE_5V_FLT 0
 
 // General board status checkers
 bool check_battery_voltage_error(void);
