@@ -28,9 +28,16 @@
 #define EFUSE_5V_FLT 0
 
 // General board status checkers
-bool check_battery_voltage_error(void);
-bool check_battery_current_error(void);
-bool check_5v_current_error(void);
-bool check_12v_current_error(void);
+uint32_t check_battery_voltage_error(void);
+uint32_t check_battery_current_error(void);
+uint32_t check_5v_current_error(void);
+uint32_t check_12v_current_error(void);
+
+// Specific board status checkers
+uint32_t efuse_5v_error(void);
+uint32_t efuse_12v_error(void);
+
+// Functions to send board status messages
+void generic_health_check(void);
 
 #endif /* ERROR_CHECKS_H */

@@ -2,6 +2,7 @@
 
 #include "mcc_generated_files/adcc.h"
 #include "platform.h"
+#include "low_pass_filter.h"
 
 void pin_init(void) {
     // LEDS
@@ -54,15 +55,15 @@ void pin_init(void) {
 }
 
 void RED_LED_SET(bool value) {
-    LATA2 = !value ^ LED_ON;
+    LATA4 = !value ^ LED_ON;
 }
 
 void BLUE_LED_SET(bool value) {
-    LATA1 = !value ^ LED_ON;
+    LATC3 = !value ^ LED_ON;
 }
 
 void WHITE_LED_SET(bool value) {
-    LATA0 = !value ^ LED_ON;
+    LATA5 = !value ^ LED_ON;
 }
 
 // Rocket actuators ---- confirm pin 
@@ -71,7 +72,7 @@ void CAN_5V_SET(bool value) {
 }
 
 void CAN_12V_SET(bool value) {
-    LATC5 = !value ^ CAN_12V_ON;
+    LATB0 = !value ^ CAN_12V_ON;
 }
 
 // I don't think we need this anymore
@@ -95,8 +96,11 @@ double low_pass_volt_5v = 0;
 
 // i think this is needed for 13V BATT Motor and 5V current readings? not sure tho
 void update_batt_curr_low_pass(void) {
-    double new_curr_reading = ADCC_GetSingleConversion(channel_BATT_CURR) / CURR_BATT_RESISTOR;
-    low_pass_curr_batt = alpha_low * low_pass_curr_batt + (1.0 - alpha_low) * new_curr_reading;
+    double new_batt_curr_reading = 
+        ADCC_GetSingleConversion(channel_BATT_CURR) / CURR_BATT_RESISTOR;
+    // call the low pass function in rocketlib
+    low_pass_curr_batt = update_low_pass(alpha_low, new_batt_curr_reading, 
+            *low_pass_curr_batt);
 }
 
 uint16_t get_batt_curr_low_pass(void) {
@@ -104,8 +108,11 @@ uint16_t get_batt_curr_low_pass(void) {
 }
 
 void update_batt_volt_low_pass(void) {
-    double new_curr_reading = ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_RATIO_BATT_VOLT;
-    low_pass_curr_batt = alpha_low * low_pass_curr_batt + (1.0 - alpha_low) * new_curr_reading;
+    double new_batt_volt_reading = 
+        ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_RATIO_BATT_VOLT;
+    
+    low_pass_volt_batt = update_low_pass(alpha_low, new_batt_volt_reading, 
+            *low_pass_volt_batt);
 }
 
 uint16_t get_batt_volt_low_pass(void) {
@@ -113,10 +120,13 @@ uint16_t get_batt_volt_low_pass(void) {
 }
 
 void update_12v_curr_low_pass(void) {
-    double new_curr_reading =
-        (ADCC_GetSingleConversion(channel_POWER_V12) * CONVERSION_ADC_TO_V / OPAMP_CURR_GAIN) /
-        (CURR_12V_RESISTOR * CURR_GAIN);
-    low_pass_curr_12v = alpha_low * low_pass_curr_12v + (1.0 - alpha_low) * new_curr_reading;
+    double new_curr_12v_reading = 
+        (ADCC_GetSingleConversion(channel_POWER_V12) * CONVERSION_ADC_TO_V 
+        / OPAMP_CURR_GAIN) / (CURR_12V_RESISTOR * CURR_GAIN);
+    
+    low_pass_curr_12v = update_low_pass(alpha_low, new_curr_12v_reading, 
+            *low_pass_curr_12v);
+    // low_pass_curr_12v = alpha_low * low_pass_curr_12v + (1.0 - alpha_low) * new_curr_reading;
 }
 
 uint16_t get_12v_curr_low_pass(void) {
@@ -124,10 +134,13 @@ uint16_t get_12v_curr_low_pass(void) {
 }
 
 void update_5v_curr_low_pass(void) {
-    double new_curr_reading =
-        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V / OPAMP_CURR_GAIN) /
-        (CURR_5V_RESISTOR * CURR_GAIN);
-    low_pass_curr_5v = alpha_low * low_pass_curr_5v + (1.0 - alpha_low) * new_curr_reading;
+    double new_5v_curr_reading =
+        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V 
+        / OPAMP_CURR_GAIN) / (CURR_5V_RESISTOR * CURR_GAIN);
+    
+    low_pass_curr_5v = update_low_pass(alpha_low, new_5v_curr_reading, 
+            *low_pass_curr_5v);
+    // low_pass_curr_5v = alpha_low * low_pass_curr_5v + (1.0 - alpha_low) * new_curr_reading;
 }
 
 uint16_t get_5v_curr_low_pass(void) {
@@ -135,9 +148,13 @@ uint16_t get_5v_curr_low_pass(void) {
 }
 
 void update_5v_volt_low_pass(void) {
-    double new_volt_reading =
-        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V) * CONVERSION_RATIO_5V_VOLT;
-    low_pass_volt_5v = alpha_low * low_pass_volt_5v + (1.0 - alpha_low) * new_volt_reading;
+    double new_5v_volt_reading =
+        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V) 
+        * CONVERSION_RATIO_5V_VOLT;
+    
+    low_pass_volt_5v = update_low_pass(alpha_low, new_5v_volt_reading, 
+            *low_pass_volt_5v);
+    // low_pass_volt_5v = alpha_low * low_pass_volt_5v + (1.0 - alpha_low) * new_volt_reading;
 }
 
 uint16_t get_5v_volt_low_pass(void) {

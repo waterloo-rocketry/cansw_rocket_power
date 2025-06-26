@@ -83,15 +83,15 @@ typedef uint16_t adc_result_t;
    None
  */
 
-typedef enum {
+typedef enum { // NEED TO BE UPDATAED
     channel_POWER_V5  = 0xb,
     channel_POWER_V12 = 0xc,
     channel_CHARGE_CURR = 0x4,
     channel_MOTOR_CURR = 0xa,
     channel_BATT_CURR = 0x17,
     channel_BATT_VOLT = 0x12,
-    channel_GROUND_VOLT  = 0x13,
-} adcc_channel_t; //page 677
+    channel_GROUND_VOLT  = 0x13     
+} adcc_channel_t; //page 675
 
 /**
   Section: ADC Module APIs

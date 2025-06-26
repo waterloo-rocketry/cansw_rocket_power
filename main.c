@@ -1,3 +1,4 @@
+#include <xc.h>
 #include "canlib.h"
 #include "device_config.h"
 #include "error_checks.h"
@@ -7,45 +8,15 @@
 #include "pwm.h"
 #include "stdint.h"
 #include "timer.h"
-#include <xc.h>
 
 static void can_msg_handler(const can_msg_t *msg);
 static void send_status_ok(void);
 
 // memory pool for the CAN tx buffer
-uint8_t tx_pool[100];
+uint8_t tx_pool[200];
 volatile bool seen_can_message = false;
 
-// setup airbrakes variables
-#if (BOARD_UNIQUE_ID == BOARD_ID_CHARGING_AIRBRAKE)
-uint32_t inj_open_time = 0;
-
-enum FLIGHT_PHASE {
-    PRE_FLIGHT = 0,
-    BOOST,
-    COAST,
-    DESCENT,
-};
-
-enum FLIGHT_PHASE state = PRE_FLIGHT;
-const uint32_t BOOST_LENGTH_MS = 1000; // for the purposes of debugging
-const uint32_t COAST_LENGTH_MS = 2000000; // see above
-volatile bool debug_en = false;
-
-// Commanded extension is 0-100 as % of full extension
-volatile uint8_t cmd_airbrakes_ext = 0;
-volatile uint8_t debug_cmd_airbrakes_ext = 0;
-uint8_t curr_airbrakes_ext = 0;
-uint32_t airbrakes_act_time = 0;
-const uint32_t MOTOR_ACT_TIME_MS = 500; // Motor guaranteed to fully actuate in this time
-
-#elif (BOARD_UNIQUE_ID == BOARD_ID_CHARGING_PAYLOAD)
-volatile bool payload_pump = false;
-const uint8_t PERCENT_SPEED = 50; // percent from 0-100
-#endif
-
-// LEDs: White is heartbeat, Blue is Motor or 5V enable, Red is Battery Charging enable
-
+// LEDs: BLUE is heartbeat, WHITE is 5V enable, RED is 12V enable
 int main(void) {
     // initialize mcc functions
     ADCC_Initialize();
@@ -80,7 +51,7 @@ int main(void) {
     uint32_t last_message_millis = millis();
     // BATTERY_CHARGER_EN(false);
 
-    bool heartbeat = false;
+    bool heartbeat = false; // moved to error checks
     while (1) {
         CLRWDT(); // feed the watchdog, which is set for 256ms
 
@@ -105,7 +76,7 @@ int main(void) {
             last_millis = millis();
 
             // visual heartbeat indicator, changed from white to blue
-            BLUE_LED_SET(heartbeat);
+            BLUE_LED_SET(heartbeat); // moved to error checks
             heartbeat = !heartbeat;
 
             // check for general board status
@@ -223,26 +194,26 @@ static void can_msg_handler(const can_msg_t *msg) {
                 if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
                     if (act_state == ACT_STATE_ON) {
                         CAN_5V_SET(true);
-                        BLUE_LED_SET(true);
+                        WHITE_LED_SET(true);
                         // send error message or change 5V_EFUSE_FAULT = 0?
                     } else if (act_state == ACT_STATE_OFF) {
                         CAN_5V_SET(false);
-                        BLUE_LED_SET(false);
+                        WHITE_LED_SET(false);
                     }
                 }
                 // RocketCan 12V Line On/Off
                 if (act_id == ACTUATOR_12V_RAIL_ROCKET) {
                     if (act_state == ACT_STATE_ON) {
                         CAN_12V_SET(true);
-                        BLUE_LED_SET(true);
+                        RED_LED_SET(true);
                     } else if (act_state == ACT_STATE_OFF) {
                         CAN_12V_SET(false);
-                        BLUE_LED_SET(false);
+                        RED_LED_SET(false);
                     }
                 }
             }
             
-            if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_PAYLOAD) {
+            else if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_PAYLOAD) {
                 // Payload 5V Line On/Off
                 if (act_id == ACTUATOR_5V_RAIL_PAYLOAD) {
                     if (act_state == ACT_STATE_ON) {
@@ -286,13 +257,6 @@ static void can_msg_handler(const can_msg_t *msg) {
         default:
             break;
     }
-}
-
-// Send a CAN message with nominal status
-static void send_status_ok(void) {
-    can_msg_t board_stat_msg;
-    build_general_board_status_msg(PRIO_MEDIUM, millis(), 0, 0, &board_stat_msg);
-    txb_enqueue(&board_stat_msg);
 }
 
 static void __interrupt() interrupt_handler(void) {
