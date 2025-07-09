@@ -15,7 +15,7 @@
 
 // From bus line. At this current, a warning will be sent out over CAN
 #define OVERCURRENT_THRESHOLD_5V_mA 1800 // buck rated for 2A max
-#define OVERCURRENT_THRESHOLD_12V_mA 2300 // buck rated for 3A max
+#define OVERCURRENT_THRESHOLD_12V_mA 2300 
 
 // Voltage threshold for 5V
 #define UNDERVOLTAGE_THRESHOLD_5V_mV 4500 

@@ -46,18 +46,13 @@ uint32_t check_5v_current_error(void) {
 }
 
 uint32_t check_12v_current_error(void) {
-    uint32_t gen_err_bitfield = 0;
     uint16_t curr_draw_mA = get_12v_curr_low_pass();
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_12V_mA) {
-        uint8_t curr_data[2] = {0};
-        curr_data[0] = (curr_draw_mA >> 8) & 0xff;
-        curr_data[1] = (curr_draw_mA >> 0) & 0xff;
-
-        gen_err_bitfield |= (1 << E_12V_OVER_CURRENT_OFFSET);
+        return (1 << E_12V_OVER_CURRENT_OFFSET);
     }
 
-    return gen_err_bitfield;
+    return 0;
 }
 
 // new health check
