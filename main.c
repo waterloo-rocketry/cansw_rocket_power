@@ -9,8 +9,20 @@
 #include "stdint.h"
 #include "timer.h"
 
+#ifndef BOARD_INST_UNIQUE_ID
+#error "Error: No board instance ID"
+#endif
+#ifndef BOARD_TYPE_UNIQUE_ID
+#error "Error: No board type ID"
+#endif
+
+#if !(BOARD_TYPE_UNIQUE_ID == BOARD_TYPE_ID_POWER)
+#error "Error: Invalid board type ID"
+#elif !(BOARD_INST_UNIQUE_ID == BOARD_INST_ID_PAYLOAD || BOARD_UNIQUE_ID == BOARD_INST_ID_ROCKET)
+#error "Error: Invalid board instance ID"
+#endif
+
 static void can_msg_handler(const can_msg_t *msg);
-static void send_status_ok(void);
 
 // memory pool for the CAN tx buffer
 uint8_t tx_pool[200];
@@ -30,13 +42,13 @@ int main(void) {
     INTCON0bits.GIE = 1;
 
     // Set up CAN TX
-    TRISC0 = 0;
-    RC0PPS = 0x33; // make C0 transmit CAN TX (page 267)
+    TRISC1 = 0;
+    RC1PPS = 0x33; // Set C1 to transmit (page 267)
 
     // Set up CAN RX
-    TRISC1 = 1;
-    ANSELC1 = 0;
-    CANRXPPS = 0x11; // make CAN read from C1 (page 264-265)
+    TRISC2 = 1;
+    ANSELC2 = 0;
+    CANRXPPS = 0x12; // Set C2 to receive (page 264-265)
 
     // set up CAN module
     can_timing_t can_setup;
@@ -49,9 +61,9 @@ int main(void) {
     uint32_t last_millis = 0;
     uint32_t sensor_last_millis = millis();
     uint32_t last_message_millis = millis();
-    // BATTERY_CHARGER_EN(false);
 
     bool heartbeat = false; // moved to error checks
+    
     while (1) {
         CLRWDT(); // feed the watchdog, which is set for 256ms
 
@@ -78,54 +90,65 @@ int main(void) {
             // visual heartbeat indicator, changed from white to blue
             BLUE_LED_SET(heartbeat); // moved to error checks
             heartbeat = !heartbeat;
+            
+            // visual power line indicators
+            WHITE_LED_SET(LATC7 == CAN_5V_ON);
+            RED_LED_SET(LATB0 == CAN_12V_ON);
 
             // check for general board status
-            bool status_ok = true;
-            status_ok &= check_battery_voltage_error();
-            status_ok &= check_battery_current_error();
+            uint32_t gen_err_bitfield = 0;
+            uint16_t board_specific_err_bitfield = 0;
+            gen_err_bitfield |= check_battery_voltage_error();
+            gen_err_bitfield |= check_battery_current_error();
+            gen_err_bitfield |= check_5v_current_error();
+            gen_err_bitfield |= check_12v_current_error();
+            
+            board_specific_err_bitfield |= efuse_5v_error();
+            board_specific_err_bitfield |= efuse_12v_error();
 
-            status_ok &= check_5v_current_error();
-            status_ok &= check_12v_current_error();
+            // Build and sent error message!
+            can_msg_t board_stat_msg;
 
-            // if there was an issue, a message would already have been sent out
-            if (status_ok) {
-                send_status_ok();
-            }
+            build_general_board_status_msg(
+                PRIO_LOW, millis(), gen_err_bitfield, board_specific_err_bitfield, &board_stat_msg
+            );
 
+            txb_enqueue(&board_stat_msg);
+
+            // measures current of the CAN 5V_SW line
             can_msg_t curr_msg_5v; // measures current going into CAN 5V
             build_analog_data_msg(
                 PRIO_LOW, millis(), SENSOR_5V_CURR, get_5v_curr_low_pass(), &curr_msg_5v
             );
             txb_enqueue(&curr_msg_5v);
             
+            // measures voltage of the boards 5V line
             can_msg_t volt_msg_5v; // measures current going into CAN 5V
             build_analog_data_msg(
-                PRIO_LOW, millis(), SENSOR_5V_VOLT, get_5v_volt_low_pass(), &volt_msg_5v
+                PRIO_LOW,
+                millis(),
+                SENSOR_5V_VOLT,
+                (uint16_t) (ADCC_GetSingleConversion(channel_5V_VOLT) * CONVERSION_ADC_TO_V) * CONVERSION_RATIO_5V_VOLT,
+                &volt_msg_5v
             );
-            txb_enqueue(&curr_msg_5v);
+            txb_enqueue(&volt_msg_5v);
             
             can_msg_t curr_msg_12v; // measures 12V current
             build_analog_data_msg(
-                PRIO_LOW, millis(), SENSOR_MOTOR_CURR, get_12v_curr_low_pass(), &curr_msg_12v
+                PRIO_LOW, millis(), SENSOR_12V_CURR, get_12v_curr_low_pass(), &curr_msg_12v
             );
             txb_enqueue(&curr_msg_12v);
 
             bool result;
-//            // Battery charging current
-//            can_msg_t curr_msg_chg; // charging current going into lipo
-//            build_analog_data_msg(
-//                PRIO_LOW,
-//                millis(),
-//                SENSOR_CHARGE_CURR,
-//                (uint16_t)(ADCC_GetSingleConversion(channel_CHARGE_CURR) / CHG_CURR_RESISTOR),
-//                &curr_msg_chg
-//            );
-//            result = txb_enqueue(&curr_msg_chg);
-//
+            
             // LiPo voltage
             can_msg_t volt_msg_batt; // voltage draw from lipo
             build_analog_data_msg(
-                PRIO_LOW, millis(), SENSOR_BATT_VOLT, get_batt_volt_low_pass(), &volt_msg_batt
+                PRIO_LOW,
+                millis(),
+                SENSOR_BATT_VOLT,
+                (uint16_t) (ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_ADC_TO_V) * CONVERSION_RATIO_BATT_VOLT,
+                &volt_msg_batt
             );
             result = txb_enqueue(&volt_msg_batt); 
             
@@ -136,19 +159,6 @@ int main(void) {
             );
             result = txb_enqueue(&curr_msg_batt); 
 
-            // Voltage health
-
-            // battery voltage msg is constructed in check_battery_voltage_error if no error
-            can_msg_t ground_volt_msg; // groundside battery voltage
-            build_analog_data_msg(
-                PRIO_LOW,
-                millis(),
-                SENSOR_CHARGE_VOLT,
-                (uint16_t)(ADCC_GetSingleConversion(channel_GROUND_VOLT) * GROUND_RESISTANCE_DIVIDER
-                ),
-                &ground_volt_msg
-            );
-            result = txb_enqueue(&ground_volt_msg);
         } // ended here
 
         // send any queued CAN messages
@@ -177,65 +187,46 @@ static void can_msg_handler(const can_msg_t *msg) {
             act_id = get_actuator_id(msg);
             act_state = get_cmd_actuator_state(msg);
 
-            // no more battery charger
-            //            // Battery Charger On/Off
-            //            if (act_id == ACTUATOR_CHARGE_ENABLE) {
-            //                if (act_state == ACT_STATE_ON) {
-            //                    BATTERY_CHARGER_EN(true);
-            //                    RED_LED_SET(true); // temporarily commented out
-            //                } else if (act_state == ACT_STATE_OFF) {
-            //                    BATTERY_CHARGER_EN(false);
-            //                    RED_LED_SET(false); // temporarily bye
-            //                }
-            //            }
-
-            if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_ROCKET) {
-                // RocketCAN 5V Line On/Off
-                if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
-                    if (act_state == ACT_STATE_ON) {
-                        CAN_5V_SET(true);
-                        WHITE_LED_SET(true);
-                        // send error message or change 5V_EFUSE_FAULT = 0?
-                    } else if (act_state == ACT_STATE_OFF) {
-                        CAN_5V_SET(false);
-                        WHITE_LED_SET(false);
-                    }
+            #if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_ROCKET)
+            // RocketCAN 5V Line On/Off
+            if (act_id == ACTUATOR_5V_RAIL_ROCKET) {
+                if (act_state == ACT_STATE_ON) {
+                    CAN_5V_SET(true);
+                    // send error message or change 5V_EFUSE_FAULT = 0?
+                } else if (act_state == ACT_STATE_OFF) {
+                    CAN_5V_SET(false);
                 }
-                // RocketCan 12V Line On/Off
-                if (act_id == ACTUATOR_12V_RAIL_ROCKET) {
-                    if (act_state == ACT_STATE_ON) {
-                        CAN_12V_SET(true);
-                        RED_LED_SET(true);
-                    } else if (act_state == ACT_STATE_OFF) {
-                        CAN_12V_SET(false);
-                        RED_LED_SET(false);
-                    }
+            }
+            // RocketCan 12V Line On/Off
+            if (act_id == ACTUATOR_12V_RAIL_ROCKET) {
+                if (act_state == ACT_STATE_ON) {
+                    CAN_12V_SET(true);
+                } else if (act_state == ACT_STATE_OFF) {
+                    CAN_12V_SET(false);
                 }
             }
             
-            else if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_PAYLOAD) {
-                // Payload 5V Line On/Off
-                if (act_id == ACTUATOR_5V_RAIL_PAYLOAD) {
-                    if (act_state == ACT_STATE_ON) {
-                        CAN_5V_SET(true);
-                        BLUE_LED_SET(true);
-                    } else if (act_state == ACT_STATE_OFF) {
-                        CAN_5V_SET(false);
-                        BLUE_LED_SET(false);
-                    }
-                }
-                // Payload 12V Line On/Off
-                if (act_id == ACTUATOR_12V_RAIL_PAYLOAD) {
-                    if (act_state == ACT_STATE_ON) {
-                        CAN_5V_SET(true);
-                        BLUE_LED_SET(true);
-                    } else if (act_state == ACT_STATE_OFF) {
-                        CAN_5V_SET(false);
-                        BLUE_LED_SET(false);
-                    }
+            #elif (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_PAYLOAD)
+            // Payload 5V Line On/Off
+            if (act_id == ACTUATOR_5V_RAIL_PAYLOAD) {
+                if (act_state == ACT_STATE_ON) {
+                    CAN_5V_SET(true);
+                } else if (act_state == ACT_STATE_OFF) {
+                    CAN_5V_SET(false);
                 }
             }
+            // Payload 12V Line On/Off
+            if (act_id == ACTUATOR_12V_RAIL_PAYLOAD) {
+                if (act_state == ACT_STATE_ON) {
+                    CAN_12V_SET(true);
+                } else if (act_state == ACT_STATE_OFF) {
+                    CAN_12V_SET(false);
+                }
+            }
+            #endif
+            
             break;
+            
         case MSG_LEDS_ON:
             RED_LED_SET(true);
             BLUE_LED_SET(true);

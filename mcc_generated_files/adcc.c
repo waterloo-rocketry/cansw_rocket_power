@@ -138,12 +138,15 @@ void ADCC_Initialize(void)
     // ADRPT 0; 
     ADRPT = 0x00;
     // ADPCH ANC4; 
-    ADPCH = 0b010100;//x00;
+//    ADPCH = 0b010100;//x00;
+    // ADPCH FVR; 
+    ADPCH = 0b111111;
     //ADPCH = 0x12;
     // ADACQ 0; 
-    ADACQL = 0x00;
+    ADACQL = 0b11111111;
     // ADACQ 0; 
-    ADACQH = 0x00;
+//    ADACQH = 0b11111;
+    ADACQH = 0b0;
     // ADCAP Additional uC disabled; 
     ADCAP = 0x00;
     // ADPRE 0; 
@@ -162,8 +165,8 @@ void ADCC_Initialize(void)
     ADREF = 0x03;
     // ADACT disabled; 
     ADACT = 0x00;
-    // ADCS FOSC/100; 
-    ADCLK = 0x31;
+    // ADCS FOSC/128; 
+    ADCLK = 0b111111;
     // ADGO stop; ADFM right; ADON enabled; ADCS FOSC/ADCLK; ADCONT disabled; 
     ADCON0 = 0x84;
 }
@@ -207,14 +210,14 @@ adc_result_t ADCC_GetSingleConversion(adcc_channel_t channel)
     ADCON0bits.ADGO = 1;
 
 
-    // Wait for the conversion to finish
-    while (ADCON0bits.ADGO)
+    // Wait for the conversion to finish 
+   while (ADCON0bits.ADGO)
     {
     }
     
     
-    // Conversion finished, return the result
-    return ((adc_result_t)((ADRESH << 8) + ADRESL));
+    // Conversion finished, return the result 
+   return ((adc_result_t)((ADRESH << 8) + ADRESL));
 }
 
 void ADCC_StopConversion(void)

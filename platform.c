@@ -18,23 +18,23 @@ void pin_init(void) {
     ANSELA5 = 0; // enable digital input buffer (Useful for reading the LED state)
     LATA5 = !LED_ON; // start with disabled
 
-    // 5V fuse fault LED
-    TRISC4 = 0; // set 5V FLT the LED pin as output
-    ANSELC4 = 0; // enable digital input buffer (Useful for reading the LED state)
-    LATC4 = 0;
+    // 5V fuse fault GPIO
+    TRISC4 = 1; // set 5V FLT the LED pin as input
+    ANSELC4 = 0; // enable digital input buffer to read GPIO state
 
-    // 12V fuse fault LED
-    TRISC5 = 0; // set 12V FLT the LED pin as output
-    ANSELC5 = 0; // enable digital input buffer (Useful for reading the LED state)
-    LATC5 = 0;
+    // 12V fuse fault GPIO
+    TRISC5 = 1; // set 12V FLT the LED pin as input
+    ANSELC5 = 0; // enable digital input buffer to read GPIO state
 
     // Rocket power lines
     LATC7 = CAN_5V_ON;
     TRISC7 = 0; // allow 5V current line to be toggle-able (5V_Fuse_RST/EN?)
-    ANSELC7 = 1; // analog
+    ODCC7 = 1; // Set pin to active-high open-drain (either pulled high or high impedance)
+
     LATB0 = CAN_12V_ON;
     TRISB0 = 0; // allow 12V current line to be toggle-able (12V_RST/EN?)
-    ANSELB0 = 1;
+    ODCB0 = 1; // Set pin to active-high open-drain (either pulled high or high impedance)
+
 
     // Current sensing
     TRISB4 = 1; // set 12V current draw (battery) to be input
@@ -75,11 +75,6 @@ void CAN_12V_SET(bool value) {
     LATB0 = !value ^ CAN_12V_ON;
 }
 
-// I don't think we need this anymore
-// void BATTERY_CHARGER_EN(bool value) {
-//    LATA5 = !value ^ CHG_BATT_ON;
-//}
-
 // this code is for low pass filter stuff for current
 // the following code was yoinked from cansw_arming
 // zach derived the equation alpha = (Fs*T/5)/ 1 + (Fs*T/5)
@@ -88,45 +83,32 @@ void CAN_12V_SET(bool value) {
 
 double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
 double low_pass_curr_batt = 0;
-double low_pass_volt_batt = 0;
-double low_pass_curr_motor = 0;
 double low_pass_curr_12v = 0;
 double low_pass_curr_5v = 0;
-double low_pass_volt_5v = 0;
 
 // i think this is needed for 13V BATT Motor and 5V current readings? not sure tho
 void update_batt_curr_low_pass(void) {
     double new_batt_curr_reading = 
-        ADCC_GetSingleConversion(channel_BATT_CURR) / CURR_BATT_RESISTOR;
+        ADCC_GetSingleConversion(channel_BATT_CURR) * CONVERSION_ADC_TO_V / BATT_CURR_GAIN;
     // call the low pass function in rocketlib
-    low_pass_curr_batt = update_low_pass(alpha_low, new_batt_curr_reading, 
-            *low_pass_curr_batt);
+//    update_low_pass(alpha_low, new_batt_curr_reading, 
+//            &low_pass_curr_batt);
+    low_pass_curr_batt = alpha_low * low_pass_curr_batt + (1.0 - alpha_low) * new_batt_curr_reading;
 }
 
 uint16_t get_batt_curr_low_pass(void) {
     return (uint16_t)low_pass_curr_batt;
-}
-
-void update_batt_volt_low_pass(void) {
-    double new_batt_volt_reading = 
-        ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_RATIO_BATT_VOLT;
-    
-    low_pass_volt_batt = update_low_pass(alpha_low, new_batt_volt_reading, 
-            *low_pass_volt_batt);
-}
-
-uint16_t get_batt_volt_low_pass(void) {
-    return (uint16_t)low_pass_volt_batt;
+//    return ADCC_GetSingleConversion(channel_BATT_CURR) * CONVERSION_ADC_TO_V;
 }
 
 void update_12v_curr_low_pass(void) {
     double new_curr_12v_reading = 
-        (ADCC_GetSingleConversion(channel_POWER_V12) * CONVERSION_ADC_TO_V 
-        / OPAMP_CURR_GAIN) / (CURR_12V_RESISTOR * CURR_GAIN);
+        (ADCC_GetSingleConversion(channel_12V_CURR) * CONVERSION_ADC_TO_V )
+        / (OPAMP_CURR_GAIN * CURR_12V_RESISTOR * CURR_GAIN);
     
-    low_pass_curr_12v = update_low_pass(alpha_low, new_curr_12v_reading, 
-            *low_pass_curr_12v);
-    // low_pass_curr_12v = alpha_low * low_pass_curr_12v + (1.0 - alpha_low) * new_curr_reading;
+//    low_pass_curr_12v = update_low_pass(alpha_low, new_curr_12v_reading, 
+//            &low_pass_curr_12v);
+     low_pass_curr_12v = alpha_low * low_pass_curr_12v + (1.0 - alpha_low) * new_curr_12v_reading;
 }
 
 uint16_t get_12v_curr_low_pass(void) {
@@ -134,29 +116,17 @@ uint16_t get_12v_curr_low_pass(void) {
 }
 
 void update_5v_curr_low_pass(void) {
-    double new_5v_curr_reading =
-        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V 
-        / OPAMP_CURR_GAIN) / (CURR_5V_RESISTOR * CURR_GAIN);
-    
-    low_pass_curr_5v = update_low_pass(alpha_low, new_5v_curr_reading, 
-            *low_pass_curr_5v);
-    // low_pass_curr_5v = alpha_low * low_pass_curr_5v + (1.0 - alpha_low) * new_curr_reading;
+    double new_5v_curr_reading = //= ADCC_GetSingleConversion(channel_5V_CURR) * CONVERSION_ADC_TO_V
+        (ADCC_GetSingleConversion(channel_5V_CURR) * CONVERSION_ADC_TO_V)
+        / (OPAMP_CURR_GAIN * CURR_5V_RESISTOR * CURR_GAIN);
+
+//    update_low_pass(alpha_low, new_5v_curr_reading, 
+//            &low_pass_curr_5v);
+     low_pass_curr_5v = alpha_low * low_pass_curr_5v + (1.0 - alpha_low) * new_5v_curr_reading;
 }
 
 uint16_t get_5v_curr_low_pass(void) {
     return (uint16_t)low_pass_curr_5v;
-}
-
-void update_5v_volt_low_pass(void) {
-    double new_5v_volt_reading =
-        (ADCC_GetSingleConversion(channel_POWER_V5) * CONVERSION_ADC_TO_V) 
-        * CONVERSION_RATIO_5V_VOLT;
-    
-    low_pass_volt_5v = update_low_pass(alpha_low, new_5v_volt_reading, 
-            *low_pass_volt_5v);
-    // low_pass_volt_5v = alpha_low * low_pass_volt_5v + (1.0 - alpha_low) * new_volt_reading;
-}
-
-uint16_t get_5v_volt_low_pass(void) {
-    return (uint16_t)low_pass_volt_5v;
+//    return (ADCC_GetSingleConversion(channel_5V_CURR) * CONVERSION_ADC_TO_V)
+//        / (OPAMP_CURR_GAIN * CURR_5V_RESISTOR * CURR_GAIN);
 }
