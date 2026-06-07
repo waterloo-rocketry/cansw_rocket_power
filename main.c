@@ -93,7 +93,7 @@ int main(void) {
             
             // visual power line indicators
             WHITE_LED_SET(LATC7 == CAN_5V_ON);
-            RED_LED_SET(LATB0 == CAN_12V_ON);
+            RED_LED_SET(LATB5 == CAN_12V_ON);
 
             // check for general board status
             uint32_t gen_err_bitfield = 0;
@@ -117,24 +117,24 @@ int main(void) {
 
             // measures current of the CAN 5V_SW line
             can_msg_t curr_msg_5v; // measures current going into CAN 5V
-            build_analog_data_msg(
+            build_analog_sensor_16bit_msg(
                 PRIO_LOW, millis(), SENSOR_5V_CURR, get_5v_curr_low_pass(), &curr_msg_5v
             );
             txb_enqueue(&curr_msg_5v);
             
             // measures voltage of the boards 5V line
             can_msg_t volt_msg_5v; // measures current going into CAN 5V
-            build_analog_data_msg(
+            build_analog_sensor_16bit_msg(
                 PRIO_LOW,
                 millis(),
                 SENSOR_5V_VOLT,
-                (uint16_t) (ADCC_GetSingleConversion(channel_5V_VOLT) * CONVERSION_ADC_TO_V) * CONVERSION_RATIO_5V_VOLT,
+                (uint16_t) (ADCC_GetSingleConversion(channel_5V_VOLT) * CONVERSION_ADC_TO_mV) * CONVERSION_RATIO_5V_VOLT,
                 &volt_msg_5v
             );
             txb_enqueue(&volt_msg_5v);
             
             can_msg_t curr_msg_12v; // measures 12V current
-            build_analog_data_msg(
+            build_analog_sensor_16bit_msg(
                 PRIO_LOW, millis(), SENSOR_12V_CURR, get_12v_curr_low_pass(), &curr_msg_12v
             );
             txb_enqueue(&curr_msg_12v);
@@ -143,18 +143,18 @@ int main(void) {
             
             // LiPo voltage
             can_msg_t volt_msg_batt; // voltage draw from lipo
-            build_analog_data_msg(
+            build_analog_sensor_16bit_msg(
                 PRIO_LOW,
                 millis(),
                 SENSOR_BATT_VOLT,
-                (uint16_t) (ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_ADC_TO_V) * CONVERSION_RATIO_BATT_VOLT,
+                (uint16_t) (ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_ADC_TO_mV) * CONVERSION_RATIO_BATT_VOLT,
                 &volt_msg_batt
             );
             result = txb_enqueue(&volt_msg_batt); 
             
             // LiPo current
             can_msg_t curr_msg_batt; // current draw from lipo
-            build_analog_data_msg(
+            build_analog_sensor_16bit_msg(
                 PRIO_LOW, millis(), SENSOR_BATT_CURR, get_batt_curr_low_pass(), &curr_msg_batt
             );
             result = txb_enqueue(&curr_msg_batt); 

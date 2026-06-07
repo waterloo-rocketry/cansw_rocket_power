@@ -19,10 +19,7 @@
 // Reset if we go this long without seeing any CAN messages (including our own)
 #define MAX_BUS_DEAD_TIME_ms 10000
 
-// Voltage monitoring in 100k Ohms
-#define BATT_RESISTANCE_DIVIDER 5.6
-#define GROUND_RESISTANCE_DIVIDER 5.6
-// Current monitoring in units of 10 milliohms
+// Voltage and current measuring stuff
 #define CURR_5V_RESISTOR 1.67 // in kiloohms
 #define CURR_12V_RESISTOR 1.67 // in kiloohms
 #define OPAMP_CURR_GAIN 8.15
@@ -36,7 +33,7 @@
 
 #define VREF 4.096
 #define MAX_COUNTS 4096
-#define CONVERSION_ADC_TO_V VREF * 1000 / MAX_COUNTS
+#define CONVERSION_ADC_TO_mV VREF * 1000 / MAX_COUNTS
 
 void pin_init(void);
 
@@ -45,7 +42,6 @@ void BLUE_LED_SET(bool value);
 void WHITE_LED_SET(bool value);
 void CAN_5V_SET(bool value);
 void CAN_12V_SET(bool value);
-void BATTERY_CHARGER_EN(bool value);
 
 void update_batt_curr_low_pass(void);
 // returns the value from the lower cut off frequency filter
