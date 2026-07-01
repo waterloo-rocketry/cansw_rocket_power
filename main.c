@@ -53,9 +53,9 @@ int main(void) {
     // set up CAN module
     can_timing_t can_setup;
     can_generate_timing_params(_XTAL_FREQ, &can_setup);
-    can_init(&can_setup, can_msg_handler);
+    pic18f26k83_can_init(&can_setup, can_msg_handler);
     // set up CAN tx buffer
-    txb_init(tx_pool, sizeof(tx_pool), can_send, can_send_rdy);
+    txb_init(tx_pool, sizeof(tx_pool), pic18f26k83_can_send, pic18f26k83_can_send_rdy);
 
     // loop timer
     uint32_t last_millis = 0;
@@ -97,20 +97,18 @@ int main(void) {
 
             // check for general board status
             uint32_t gen_err_bitfield = 0;
-            uint16_t board_specific_err_bitfield = 0;
             gen_err_bitfield |= check_battery_voltage_error();
             gen_err_bitfield |= check_battery_current_error();
             gen_err_bitfield |= check_5v_current_error();
             gen_err_bitfield |= check_12v_current_error();
-            
-            board_specific_err_bitfield |= efuse_5v_error();
-            board_specific_err_bitfield |= efuse_12v_error();
+            gen_err_bitfield |= efuse_5v_error();
+            gen_err_bitfield |= efuse_12v_error();
 
             // Build and sent error message!
             can_msg_t board_stat_msg;
 
             build_general_board_status_msg(
-                PRIO_LOW, millis(), gen_err_bitfield, board_specific_err_bitfield, &board_stat_msg
+                PRIO_LOW, millis(), gen_err_bitfield, &board_stat_msg
             );
 
             txb_enqueue(&board_stat_msg);
@@ -252,7 +250,7 @@ static void can_msg_handler(const can_msg_t *msg) {
 
 static void __interrupt() interrupt_handler(void) {
     if (PIR5) {
-        can_handle_interrupt();
+        pic18f26k83_can_handle_interrupt();
     }
 
     // Timer0 has overflowed - update millis() function

@@ -9,7 +9,7 @@
 
 uint32_t check_battery_voltage_error(void) {
     uint32_t gen_err_bitfield = 0;
-    uint16_t adc_result = ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_ADC_TO_V;
+    uint16_t adc_result = ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_ADC_TO_mV;
     uint16_t batt_voltage_mV = (uint16_t)(adc_result * CONVERSION_RATIO_BATT_VOLT);
     
     // undervoltage
@@ -58,7 +58,7 @@ uint32_t check_12v_current_error(void) {
 // new health check
 uint32_t check_5v_voltage_error(void) {
     uint32_t gen_err_bitfield = 0;
-    uint16_t adc_result = (ADCC_GetSingleConversion(channel_5V_VOLT) * CONVERSION_ADC_TO_V);
+    uint16_t adc_result = (ADCC_GetSingleConversion(channel_5V_VOLT) * CONVERSION_ADC_TO_mV);
     uint16_t voltage_mV = (adc_result * CONVERSION_RATIO_5V_VOLT);
 
     // overvoltage
@@ -73,14 +73,24 @@ uint32_t check_5v_voltage_error(void) {
     return gen_err_bitfield;
 }
 
-uint16_t efuse_5v_error(void) {
+uint32_t efuse_5v_error(void) {
+    uint32_t gen_err_bitfield = 0;
     // read data from pin
     uint8_t efuse_flt_5v = RC4;
-    return (efuse_flt_5v == EFUSE_5V_FLT) << EFUSE_5V_FLT_OFFSET;
+    if (efuse_flt_5v == EFUSE_5V_FLT) {
+        gen_err_bitfield |= (1 << E_5V_EFUSE_FAULT_OFFSET);
+    }
+    
+    return gen_err_bitfield;
 }
 
-uint16_t efuse_12v_error(void) {
+uint32_t efuse_12v_error(void) {
+    uint32_t gen_err_bitfield = 0;
     // read data from pin
     uint8_t efuse_flt_12v = RC5;
-    return (efuse_flt_12v == EFUSE_12V_FLT) << EFUSE_12V_FLT_OFFSET;
+    if (efuse_flt_12v == EFUSE_12V_FLT) {
+        gen_err_bitfield |= (1 << E_5V_EFUSE_FAULT_OFFSET);
+    }
+    
+    return gen_err_bitfield;
 }
