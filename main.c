@@ -5,7 +5,6 @@
 #include "mcc_generated_files/adcc.h"
 #include "mcc_generated_files/fvr.h"
 #include "platform.h"
-#include "pwm.h"
 #include "stdint.h"
 #include "timer.h"
 
@@ -176,14 +175,17 @@ static void can_msg_handler(const can_msg_t *msg) {
     seen_can_message = true;
     uint16_t msg_type = get_message_type(msg);
 
-    int act_id;
-    int act_state;
-    int dest_id;
+    can_actuator_id_t act_id;
+    can_actuator_state_t act_state;
 
     switch (msg_type) {
         case MSG_ACTUATOR_CMD: // this will toggle *all* battery chargers, not just CHARGING_CAN
-            act_id = get_actuator_id(msg);
-            act_state = get_cmd_actuator_state(msg);
+            if (get_actuator_id(msg, &act_id) != W_SUCCESS) {
+                // ?
+            }
+            if (get_cmd_actuator_state(msg, &act_state) != W_SUCCESS) {
+                // ?
+            }
 
             #if (BOARD_INST_UNIQUE_ID == BOARD_INST_ID_ROCKET)
             // RocketCAN 5V Line On/Off
@@ -238,7 +240,11 @@ static void can_msg_handler(const can_msg_t *msg) {
             break;
 
         case MSG_RESET_CMD:
-            if (check_board_need_reset(msg)) {
+            bool board_need_reset = false;
+            if (check_board_need_reset(msg, &board_need_reset) != W_SUCCESS) {
+                // ?
+            }
+            if (board_need_reset) {
                 RESET();
             }
             break;
