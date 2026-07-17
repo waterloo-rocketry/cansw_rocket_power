@@ -89,7 +89,7 @@ uint32_t efuse_12v_error(void) {
     // read data from pin
     uint8_t efuse_flt_12v = RC5;
     if (efuse_flt_12v == EFUSE_12V_FLT) {
-        gen_err_bitfield |= (1 << E_5V_EFUSE_FAULT_OFFSET);
+        gen_err_bitfield |= (1 << E_12V_EFUSE_FAULT_OFFSET);
     }
     
     return gen_err_bitfield;
