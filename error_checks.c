@@ -14,11 +14,11 @@ uint32_t check_battery_voltage_error(void) {
     
     // undervoltage
     if (batt_voltage_mV < UNDERVOLTAGE_THRESHOLD_BATT_mV) {
-        gen_err_bitfield |= (1 << E_BATT_UNDER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_BATT_UNDER_VOLT_OFFSET);
     } 
     // overvoltage
     else if(batt_voltage_mV > OVERVOLTAGE_THRESHOLD_BATT_mV) {
-        gen_err_bitfield |= (1 << E_BATT_OVER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_BATT_OVER_VOLT_OFFSET);
     }
 
     // return the bitfield, 0 if no errors
@@ -29,7 +29,7 @@ uint32_t check_battery_current_error(void) {
     uint16_t curr_draw_mA = get_batt_curr_low_pass();
     
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_BATT_mA) {
-        return (1 << E_BATT_OVER_CURRENT_OFFSET);
+        return (1 << E_BATT_OVER_CURR_OFFSET);
     }
 
     return 0;
@@ -39,7 +39,7 @@ uint32_t check_5v_current_error(void) {
     uint16_t curr_draw_mA = get_5v_curr_low_pass();
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_5V_mA) {
-        return (1 << E_5V_OVER_CURRENT_OFFSET);
+        return (1 << E_5V_OVER_CURR_OFFSET);
     }
 
     return 0;
@@ -49,7 +49,7 @@ uint32_t check_12v_current_error(void) {
     uint16_t curr_draw_mA = get_12v_curr_low_pass();
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_12V_mA) {
-        return (1 << E_12V_OVER_CURRENT_OFFSET);
+        return (1 << E_12V_OVER_CURR_OFFSET);
     }
 
     return 0;
@@ -63,11 +63,11 @@ uint32_t check_5v_voltage_error(void) {
 
     // overvoltage
     if (voltage_mV > OVERVOLTAGE_THRESHOLD_5V_mV) {
-        gen_err_bitfield |= (1 << E_5V_OVER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_5V_OVER_VOLT_OFFSET);
     } 
     // undervoltage
     else if (voltage_mV < UNDERVOLTAGE_THRESHOLD_5V_mV) {
-        gen_err_bitfield |= (1 << E_5V_UNDER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_5V_UNDER_VOLT_OFFSET);
     }
 
     return gen_err_bitfield;
