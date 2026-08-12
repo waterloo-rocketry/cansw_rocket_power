@@ -25,12 +25,6 @@
 #define EFUSE_12V_FLT 0 
 #define EFUSE_5V_FLT 0
 
-// Standard Error Code
-typedef enum {
-    EFUSE_12V_FLT_OFFSET = 0,
-    EFUSE_5V_FLT_OFFSET
-} specific_error_offsets;
-
 // For all error check functions, 
 // false means nominal true means error
 
@@ -39,9 +33,7 @@ uint32_t check_battery_voltage_error(void);
 uint32_t check_battery_current_error(void);
 uint32_t check_5v_current_error(void);
 uint32_t check_12v_current_error(void);
-
-// Specific board status checkers
-uint16_t efuse_5v_error(void);
-uint16_t efuse_12v_error(void);
+uint32_t efuse_5v_error(void);
+uint32_t efuse_12v_error(void);
 
 #endif /* ERROR_CHECKS_H */

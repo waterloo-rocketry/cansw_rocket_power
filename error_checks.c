@@ -9,16 +9,16 @@
 
 uint32_t check_battery_voltage_error(void) {
     uint32_t gen_err_bitfield = 0;
-    uint16_t adc_result = ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_ADC_TO_V;
+    uint16_t adc_result = ADCC_GetSingleConversion(channel_BATT_VOLT) * CONVERSION_ADC_TO_mV;
     uint16_t batt_voltage_mV = (uint16_t)(adc_result * CONVERSION_RATIO_BATT_VOLT);
     
     // undervoltage
     if (batt_voltage_mV < UNDERVOLTAGE_THRESHOLD_BATT_mV) {
-        gen_err_bitfield |= (1 << E_BATT_UNDER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_BATT_UNDER_VOLT_OFFSET);
     } 
     // overvoltage
     else if(batt_voltage_mV > OVERVOLTAGE_THRESHOLD_BATT_mV) {
-        gen_err_bitfield |= (1 << E_BATT_OVER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_BATT_OVER_VOLT_OFFSET);
     }
 
     // return the bitfield, 0 if no errors
@@ -29,7 +29,7 @@ uint32_t check_battery_current_error(void) {
     uint16_t curr_draw_mA = get_batt_curr_low_pass();
     
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_BATT_mA) {
-        return (1 << E_BATT_OVER_CURRENT_OFFSET);
+        return (1 << E_BATT_OVER_CURR_OFFSET);
     }
 
     return 0;
@@ -39,7 +39,7 @@ uint32_t check_5v_current_error(void) {
     uint16_t curr_draw_mA = get_5v_curr_low_pass();
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_5V_mA) {
-        return (1 << E_5V_OVER_CURRENT_OFFSET);
+        return (1 << E_5V_OVER_CURR_OFFSET);
     }
 
     return 0;
@@ -49,7 +49,7 @@ uint32_t check_12v_current_error(void) {
     uint16_t curr_draw_mA = get_12v_curr_low_pass();
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_12V_mA) {
-        return (1 << E_12V_OVER_CURRENT_OFFSET);
+        return (1 << E_12V_OVER_CURR_OFFSET);
     }
 
     return 0;
@@ -58,29 +58,39 @@ uint32_t check_12v_current_error(void) {
 // new health check
 uint32_t check_5v_voltage_error(void) {
     uint32_t gen_err_bitfield = 0;
-    uint16_t adc_result = (ADCC_GetSingleConversion(channel_5V_VOLT) * CONVERSION_ADC_TO_V);
+    uint16_t adc_result = (ADCC_GetSingleConversion(channel_5V_VOLT) * CONVERSION_ADC_TO_mV);
     uint16_t voltage_mV = (adc_result * CONVERSION_RATIO_5V_VOLT);
 
     // overvoltage
     if (voltage_mV > OVERVOLTAGE_THRESHOLD_5V_mV) {
-        gen_err_bitfield |= (1 << E_5V_OVER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_5V_OVER_VOLT_OFFSET);
     } 
     // undervoltage
     else if (voltage_mV < UNDERVOLTAGE_THRESHOLD_5V_mV) {
-        gen_err_bitfield |= (1 << E_5V_UNDER_VOLTAGE_OFFSET);
+        gen_err_bitfield |= (1 << E_5V_UNDER_VOLT_OFFSET);
     }
 
     return gen_err_bitfield;
 }
 
-uint16_t efuse_5v_error(void) {
+uint32_t efuse_5v_error(void) {
+    uint32_t gen_err_bitfield = 0;
     // read data from pin
     uint8_t efuse_flt_5v = RC4;
-    return (efuse_flt_5v == EFUSE_5V_FLT) << EFUSE_5V_FLT_OFFSET;
+    if (efuse_flt_5v == EFUSE_5V_FLT) {
+        gen_err_bitfield |= (1 << E_5V_EFUSE_FAULT_OFFSET);
+    }
+    
+    return gen_err_bitfield;
 }
 
-uint16_t efuse_12v_error(void) {
+uint32_t efuse_12v_error(void) {
+    uint32_t gen_err_bitfield = 0;
     // read data from pin
     uint8_t efuse_flt_12v = RC5;
-    return (efuse_flt_12v == EFUSE_12V_FLT) << EFUSE_12V_FLT_OFFSET;
+    if (efuse_flt_12v == EFUSE_12V_FLT) {
+        gen_err_bitfield |= (1 << E_12V_EFUSE_FAULT_OFFSET);
+    }
+    
+    return gen_err_bitfield;
 }
